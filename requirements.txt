@@ -1,0 +1,7 @@
+requests
+coverage
+flake8
+mock
+pyflakes
+pytest
+vcrpy
