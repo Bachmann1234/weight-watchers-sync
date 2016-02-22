@@ -1,5 +1,7 @@
 import datetime
 import getpass
+from collections import defaultdict
+from pprint import pprint
 
 import requests
 import sys
@@ -10,9 +12,14 @@ WW_HOME_PAGE = "https://cmx.weightwatchers.com"
 WW_LOGIN_URL = 'https://login.weightwatchers.com/classic/UI/Login'
 WW_JOURNAL_URL = '{host}/api/v2/cmx/members/~/trackedFoods/{date}'
 FOOD_URL = '{host}/api/v2/public/foods/{food_id}/{version_id}'
+RECIPE_URL = '{host}/api/v2/public/recipes/{food_id}/{version_id}?fullDetails=true'
+
+WW_FOOD = 'WWFOOD'
+WW_RECIPE = 'WWRECIPE'
+WW_VENDOR_FOOD = 'WWVENDORFOOD'
 
 
-def get_nutrition_information(session, food_log):
+def get_food_detail(session, food_log):
     """
     Args:
         session (requests.Session) : An authenticated ww session
@@ -20,14 +27,20 @@ def get_nutrition_information(session, food_log):
     Returns:
          (dict) ww food objects
     """
-    # I predict this will change as I deal with different kinds of foods
+    nutritional_urls = {
+        WW_FOOD: FOOD_URL,
+        WW_VENDOR_FOOD: FOOD_URL,
+        WW_RECIPE: RECIPE_URL
+    }
+    source = food_log['sourceType']
     food_info = session.get(
-        FOOD_URL.format(
+        nutritional_urls[source].format(
             host=WW_HOME_PAGE,
             food_id=food_log['_id'],
             version_id=food_log['versionId']
         )
     )
+    food_info.raise_for_status()
     return food_info.json()
 
 
@@ -82,7 +95,7 @@ def login(username, password, session):
     return session
 
 
-def get_calories(nutritional_info, food_log):
+def get_nutrition(nutritional_info, food_log):
     """
     Pulls the correct information out of the nutritional info based
     on the provided food_log
@@ -90,22 +103,75 @@ def get_calories(nutritional_info, food_log):
         nutritional_info (dict): WW food info of the food the food log is tracking
         food_log (dict): food entry logging the food nutritional info was passed in
     """
-    log_portion = food_log['portionName']
-    portions_ate = food_log['portionSize']
+    nutrition_extractors = {
+        WW_RECIPE: get_nutrition_for_recipe,
+        WW_FOOD: get_nutrition_for_food,
+        WW_VENDOR_FOOD: get_nutrition_for_food,
+    }
+    source = food_log['sourceType']
+    return nutrition_extractors[source](nutritional_info, food_log)
+
+
+def get_nutrition_for_recipe(nutritional_info, food_log):
+    ingredient_nutritional_infos = [
+        _get_nutrition_for_food(
+            ingredient['itemDetail'],
+            ingredient['portionName'],
+            ingredient['quantity']
+        ) for ingredient in nutritional_info['ingredients']
+    ]
+
+    result = defaultdict(float)
+    for key in ingredient_nutritional_infos[0].keys():
+        for ingredient_nutritional_info in ingredient_nutritional_infos:
+            result[key] += ingredient_nutritional_info[key]
+
+    return nutrition_times_portion(result, food_log['portionSize'])
+
+
+def get_nutrition_for_food(nutritional_info, food_log):
+    """
+    Pulls the correct information out of the nutritional info based
+    on the provided food_log
+    Args:
+        nutritional_info (dict): WW food info of the food the food log is tracking
+        food_log (dict): food entry logging the food nutritional info was passed in
+    """
+    return _get_nutrition_for_food(nutritional_info, food_log['portionName'], food_log['portionSize'])
+
+
+def _get_nutrition_for_food(nutritional_info, portion_name, portion_size):
     portions = nutritional_info['portions']
     for portion in portions:
-        if portion['name'] == log_portion:
-            return portion['nutrition']['calories'] * portions_ate
-    raise ValueError("Failed to find portion {}".format(log_portion))
+        if portion['name'] == portion_name:
+            return nutrition_times_portion(portion['nutrition'], portion_size)
+    raise ValueError("Failed to find portion {}".format(portion_name))
 
 
-def main(username, password):
+def nutrition_times_portion(nutritional_info, portions):
+    """
+    Simply multiplication
+    Args:
+        nutritional_info (dict): Nutritional info for 1 portion
+        portions (int): portions to multiply by
+    returns:
+        dict with values multiplied by portions
+    """
+    return {key: (float(value) * float(portions)) for key, value in nutritional_info.items()}
+
+
+def get_nutrition_info_for_day(username, password):
     session = login(username, password, requests.Session())
-    return sum(get_calories(get_nutrition_information(session, food_log), food_log)
-               for food_log in get_foods_for_day(session, datetime.datetime.now()))
+    result = []
+    food_logs = get_foods_for_day(session, datetime.datetime.now())
+    for food_log in food_logs:
+        result.append({
+            "food_log": food_log,
+            "nutrition_info": get_nutrition(get_food_detail(session, food_log), food_log)
+        })
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        main(input("Username: "), getpass.getpass())
+        pprint(get_nutrition_info_for_day(input("Username: "), getpass.getpass()))
     else:
-        main(sys.argv[1], sys.argv[2])
+        pprint(get_nutrition_info_for_day(sys.argv[1], sys.argv[2]))
