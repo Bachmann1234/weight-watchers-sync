@@ -199,4 +199,4 @@ if __name__ == '__main__':
     else:
         nutritional_info_for_day = get_nutrition_info_for_day(sys.argv[1], sys.argv[2])
     pprint(nutritional_info_for_day)
-    print(sum_nutrition_info(list(n["nutrition_info"] for n in nutritional_info_for_day)))
+    pprint(dict(sum_nutrition_info(list(n["nutrition_info"] for n in nutritional_info_for_day))))
