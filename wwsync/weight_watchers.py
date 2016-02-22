@@ -128,13 +128,25 @@ def get_nutrition_for_recipe(nutritional_info, food_log):
             ingredient['quantity']
         ) for ingredient in nutritional_info['ingredients']
     ]
+    sum_of_ingredients = sum_nutrition_info(ingredient_nutritional_infos)
 
+    return nutrition_times_portion(sum_of_ingredients, food_log['portionSize']/nutritional_info['servingSize'])
+
+
+def sum_nutrition_info(nutritional_infos):
+    """
+    Combine the nutritional infos provided
+    Args:
+        nutritional_infos list[dict]: nutritional infos to be combined
+    Returns:
+        The sum of the dicts. If a key is missing in one of the dicts we assume
+        a value of zero for that key
+    """
     result = defaultdict(float)
-    for key in ingredient_nutritional_infos[0].keys():
-        for ingredient_nutritional_info in ingredient_nutritional_infos:
+    for key in nutritional_infos[0].keys():
+        for ingredient_nutritional_info in nutritional_infos:
             result[key] += float(ingredient_nutritional_info.get(key, 0))
-
-    return nutrition_times_portion(result, food_log['portionSize'])
+    return result
 
 
 def get_nutrition_for_food(nutritional_info, food_log):
@@ -148,11 +160,11 @@ def get_nutrition_for_food(nutritional_info, food_log):
     return _get_nutrition_for_food(nutritional_info, food_log['portionName'], food_log['portionSize'])
 
 
-def _get_nutrition_for_food(nutritional_info, portion_name, portion_size):
+def _get_nutrition_for_food(nutritional_info, portion_name, amount_consumed):
     portions = nutritional_info['portions']
     for portion in portions:
         if portion['name'] == portion_name:
-            return nutrition_times_portion(portion['nutrition'], portion_size)
+            return nutrition_times_portion(portion['nutrition'], amount_consumed/portion['size'])
     raise ValueError("Failed to find portion {}".format(portion_name))
 
 
@@ -179,10 +191,12 @@ def get_nutrition_info_for_day(username, password, date=None):
             "food_log": food_log,
             "nutrition_info": get_nutrition(get_food_detail(session, food_log), food_log)
         })
-    return food_logs
+    return result
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        pprint(get_nutrition_info_for_day(input("Username: "), getpass.getpass()))
+        nutritional_info_for_day = get_nutrition_info_for_day(input("Username: "), getpass.getpass())
     else:
-        pprint(get_nutrition_info_for_day(sys.argv[1], sys.argv[2]))
+        nutritional_info_for_day = get_nutrition_info_for_day(sys.argv[1], sys.argv[2])
+    pprint(nutritional_info_for_day)
+    print(sum_nutrition_info(list(n["nutrition_info"] for n in nutritional_info_for_day)))
