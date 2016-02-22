@@ -13,10 +13,14 @@ WW_LOGIN_URL = 'https://login.weightwatchers.com/classic/UI/Login'
 WW_JOURNAL_URL = '{host}/api/v2/cmx/members/~/trackedFoods/{date}'
 FOOD_URL = '{host}/api/v2/public/foods/{food_id}/{version_id}'
 RECIPE_URL = '{host}/api/v2/public/recipes/{food_id}/{version_id}?fullDetails=true'
+MEMBER_FOOD_URL = '{host}/api/v2/cmx/members/~/custom-foods/foods/{food_id}/{version_id}?fullDetails=true'
+MEMBER_RECIPE_URL = '{host}/api/v2/cmx/members/~/custom-foods/recipes/{food_id}/{version_id}?fullDetails=true'
 
 WW_FOOD = 'WWFOOD'
+MEMBER_FOOD = 'MEMBERFOOD'
 WW_RECIPE = 'WWRECIPE'
 WW_VENDOR_FOOD = 'WWVENDORFOOD'
+MEMBER_RECIPE = 'MEMBERRECIPE'
 
 
 def get_food_detail(session, food_log):
@@ -30,7 +34,9 @@ def get_food_detail(session, food_log):
     nutritional_urls = {
         WW_FOOD: FOOD_URL,
         WW_VENDOR_FOOD: FOOD_URL,
-        WW_RECIPE: RECIPE_URL
+        WW_RECIPE: RECIPE_URL,
+        MEMBER_FOOD: MEMBER_FOOD_URL,
+        MEMBER_RECIPE: MEMBER_RECIPE_URL,
     }
     source = food_log['sourceType']
     food_info = session.get(
@@ -107,6 +113,8 @@ def get_nutrition(nutritional_info, food_log):
         WW_RECIPE: get_nutrition_for_recipe,
         WW_FOOD: get_nutrition_for_food,
         WW_VENDOR_FOOD: get_nutrition_for_food,
+        MEMBER_FOOD: get_nutrition_for_food,
+        MEMBER_RECIPE: get_nutrition_for_recipe,
     }
     source = food_log['sourceType']
     return nutrition_extractors[source](nutritional_info, food_log)
@@ -124,7 +132,7 @@ def get_nutrition_for_recipe(nutritional_info, food_log):
     result = defaultdict(float)
     for key in ingredient_nutritional_infos[0].keys():
         for ingredient_nutritional_info in ingredient_nutritional_infos:
-            result[key] += ingredient_nutritional_info[key]
+            result[key] += float(ingredient_nutritional_info.get(key, 0))
 
     return nutrition_times_portion(result, food_log['portionSize'])
 
@@ -160,15 +168,18 @@ def nutrition_times_portion(nutritional_info, portions):
     return {key: (float(value) * float(portions)) for key, value in nutritional_info.items()}
 
 
-def get_nutrition_info_for_day(username, password):
+def get_nutrition_info_for_day(username, password, date=None):
+    if date is None:
+        date = datetime.datetime.now()
     session = login(username, password, requests.Session())
     result = []
-    food_logs = get_foods_for_day(session, datetime.datetime.now())
+    food_logs = get_foods_for_day(session, date)
     for food_log in food_logs:
         result.append({
             "food_log": food_log,
             "nutrition_info": get_nutrition(get_food_detail(session, food_log), food_log)
         })
+    return food_logs
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
