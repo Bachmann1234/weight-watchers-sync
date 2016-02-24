@@ -1,5 +1,7 @@
 import datetime
 import getpass
+import os
+
 from collections import defaultdict
 from pprint import pprint
 
@@ -194,9 +196,6 @@ def get_nutrition_info_for_day(username, password, date=None):
     return result
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        nutritional_info_for_day = get_nutrition_info_for_day(input("Username: "), getpass.getpass())
-    else:
-        nutritional_info_for_day = get_nutrition_info_for_day(sys.argv[1], sys.argv[2])
+    nutritional_info_for_day = get_nutrition_info_for_day(os.environ['WW_USER'], os.environ['WW_PASSWD'])
     pprint(nutritional_info_for_day)
     pprint(dict(sum_nutrition_info(list(n["nutrition_info"] for n in nutritional_info_for_day))))
