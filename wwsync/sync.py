@@ -1,7 +1,8 @@
 import logging
+import pprint
 
 import os
-from wwsync.fitbit import get_code, auth, get_units, clear_food_logs, make_food_log
+from wwsync.fitbit import get_code, auth, get_units, clear_food_logs, make_food_log, get_food_logs
 from wwsync.weight_watchers import get_nutrition_info_for_day
 
 
@@ -17,7 +18,7 @@ def main():
     auth_response = auth(code, client_id, secret)
     auth_header = {'Authorization': 'Bearer {}'.format(auth_response['access_token'])}
     units = get_units(auth_header)
-    clear_food_logs(auth_header)
+    clear_food_logs(auth_header, get_food_logs(auth_header))
 
     for log in nutritional_info_for_day:
         make_food_log(
@@ -25,6 +26,8 @@ def main():
             log,
             units
         )
+    # print final result
+    pprint.pprint(get_food_logs(auth_header))
 
 
 if __name__ == '__main__':

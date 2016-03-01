@@ -1,4 +1,7 @@
 import logging
+import pprint
+
+import os
 import webbrowser
 from datetime import datetime
 
@@ -135,11 +138,14 @@ def get_units(auth_header):
     return units
 
 
-def clear_food_logs(auth_header, date=datetime.now()):
-    logging.info("Requesting current logs to clear them")
+def get_food_logs(auth_header, date=datetime.now()):
+    logging.info("Requesting current fitbit food logs")
     response = requests.get(FITBIT_GET_FOOD_URL.format(date), headers=auth_header)
     response.raise_for_status()
-    food_logs = response.json()
+    return response.json()
+
+
+def clear_food_logs(auth_header, food_logs):
     for log in food_logs['foods']:
         logging.info("Deleting {}".format(log['loggedFood']['name']))
         delete_response = requests.delete(
@@ -148,3 +154,16 @@ def clear_food_logs(auth_header, date=datetime.now()):
         )
         delete_response.raise_for_status()
     logging.info("Done deleting logs")
+
+
+def main():
+    logging.basicConfig(level='INFO')
+    client_id = os.environ['WW_FB_ID']
+    secret = os.environ['WW_FB_SECRET']
+    code = get_code(client_id)
+    auth_response = auth(code, client_id, secret)
+    auth_header = {'Authorization': 'Bearer {}'.format(auth_response['access_token'])}
+    pprint.pprint(get_food_logs(auth_header))
+
+if __name__ == '__main__':
+    main()
