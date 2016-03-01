@@ -86,23 +86,28 @@ def make_food_log(
     food_log = ww_food_entry['food_log']
     nutrition_info = ww_food_entry['nutrition_info']
     ww_unit = food_log['portionName'].replace('(s)', '')
+    data = {
+        'foodName': food_log['name'],
+        'mealTypeId': ww_to_fitbit_meal[food_log['timeOfDay']],
+        'unitId': unit_dict.get(ww_unit, unit_dict[DEFAULT_UNIT]),
+        'amount': food_log['portionSize'],
+        'date': "{:%Y-%m-%d}".format(date),
+        'calories': int(nutrition_info['calories']),
+        'sugars': nutrition_info.get('sugar', -1),
+        'sodium': nutrition_info.get('sodium', -1),
+        'protein': nutrition_info.get('protein', -1),
+        'saturatedFat': nutrition_info.get('saturatedFat', -1),
+        'totalFat': nutrition_info.get('fat', -1),
+        'dietaryFiber': nutrition_info.get('fiber', -1),
+        'totalCarbohydrate': nutrition_info.get('carbs', -1)
+    }
+    for key in data.copy().keys():
+        if data[key] == -1:
+            del(data[key])
+
     response = requests.post(
         FITBIT_EDIT_FOOD_LOG_URL,
-        data={
-            'foodName': food_log['name'],
-            'mealTypeId': ww_to_fitbit_meal[food_log['timeOfDay']],
-            'unitId': unit_dict.get(ww_unit, unit_dict[DEFAULT_UNIT]),
-            'amount': food_log['portionSize'],
-            'date': "{:%Y-%m-%d}".format(date),
-            'calories': int(nutrition_info['calories']),
-            'sugars': nutrition_info['sugar'],
-            'sodium': nutrition_info['sodium'],
-            'protein': nutrition_info['protein'],
-            'saturatedFat': nutrition_info['saturatedFat'],
-            'totalFat': nutrition_info['fat'],
-            'dietaryFiber': nutrition_info['fiber'],
-            'totalCarbohydrate': nutrition_info['carbs']
-        },
+        data=data,
         headers=auth_header
     )
     response.raise_for_status()
