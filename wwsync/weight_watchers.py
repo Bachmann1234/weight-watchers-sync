@@ -1,5 +1,7 @@
 import datetime
 import getpass
+import logging
+
 import os
 
 from collections import defaultdict
@@ -40,6 +42,7 @@ def get_food_detail(session, food_log):
         MEMBER_FOOD: MEMBER_FOOD_URL,
         MEMBER_RECIPE: MEMBER_RECIPE_URL,
     }
+    logging.info("Getting {} detail".format(food_log['name']))
     source = food_log['sourceType']
     food_info = session.get(
         nutritional_urls[source].format(
@@ -60,6 +63,7 @@ def get_foods_for_day(session, date):
     Returns:
          (dict) ww food objects
     """
+    logging.info("Getting food for day")
     response = session.get(
         WW_JOURNAL_URL.format(
             host=WW_HOME_PAGE,
@@ -80,6 +84,7 @@ def login(username, password, session):
     Returns:
         The session passed in except now its authenticated
     """
+    logging.info("Logging into weight watchers")
     initial_url = '{}{}'.format(WW_LOGIN_URL, '?realm=US&service=ldapService&goto=http%3a%2f%2fcmx.weightwatchers.com')
     session.headers.setdefault('user-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) '
                                              'AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -195,7 +200,12 @@ def get_nutrition_info_for_day(username, password, date=None):
         })
     return result
 
-if __name__ == '__main__':
+
+def main():
+    logging.basicConfig(level='INFO')
     nutritional_info_for_day = get_nutrition_info_for_day(os.environ['WW_USER'], os.environ['WW_PASSWD'])
     pprint(nutritional_info_for_day)
     pprint(dict(sum_nutrition_info(list(n["nutrition_info"] for n in nutritional_info_for_day))))
+
+if __name__ == '__main__':
+    main()

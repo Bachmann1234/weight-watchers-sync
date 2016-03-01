@@ -1,3 +1,4 @@
+import logging
 import webbrowser
 from datetime import datetime
 
@@ -26,6 +27,7 @@ def auth(code, client_id, secret):
         code=code,
         client_id=client_id
     )
+    logging.info("logging into fitbit")
     r = requests.post(auth_url, headers=headers)
     if r.status_code != 200:
         print("Auth Failed: {}".format(r.text))
@@ -105,6 +107,8 @@ def make_food_log(
         if data[key] == -1:
             del(data[key])
 
+    logging.info("Logging food: {}".format(food_log['name']))
+
     response = requests.post(
         FITBIT_EDIT_FOOD_LOG_URL,
         data=data,
@@ -122,6 +126,7 @@ def get_units(auth_header):
     returns:
         dict from unit name to unit id
     """
+    logging.info("Grabbing Units")
     response = requests.get(FITBIT_FOOD_UNIT_URL, headers=auth_header)
     response.raise_for_status()
     units = {}
@@ -131,12 +136,15 @@ def get_units(auth_header):
 
 
 def clear_food_logs(auth_header, date=datetime.now()):
+    logging.info("Requesting current logs to clear them")
     response = requests.get(FITBIT_GET_FOOD_URL.format(date), headers=auth_header)
     response.raise_for_status()
     food_logs = response.json()
     for log in food_logs['foods']:
+        logging.info("Deleting {}".format(log['loggedFood']['name']))
         delete_response = requests.delete(
             FITBIT_DELETE_FOOD_URL.format(log_id=log['logId']),
             headers=auth_header
         )
         delete_response.raise_for_status()
+    logging.info("Done deleting logs")
