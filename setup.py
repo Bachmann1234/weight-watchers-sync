@@ -8,6 +8,6 @@ setup(
    description='Syncs Weight Watcher food log to Fitbit',
    license='MIT',
    packages=find_packages(),
-   install_requires=['requests==2.9.1']
+   install_requires=['requests==2.9.1', 'beautifulsoup4==4.4.1']
 )
 

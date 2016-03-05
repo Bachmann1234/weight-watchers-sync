@@ -1,5 +1,4 @@
 import datetime
-import getpass
 import logging
 
 import os
@@ -8,7 +7,6 @@ from collections import defaultdict
 from pprint import pprint
 
 import requests
-import sys
 
 from bs4 import BeautifulSoup
 
