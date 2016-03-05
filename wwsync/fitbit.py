@@ -1,3 +1,4 @@
+import json
 import logging
 import pprint
 
@@ -11,6 +12,8 @@ import base64
 import requests
 
 FITBIT_AUTH_URL = 'https://api.fitbit.com/oauth2/token?code={code}&client_id={client_id}&grant_type=authorization_code'
+FITBIT_AUTH_REFRESH_URL = ('https://api.fitbit.com/oauth2/token?'
+                           'refresh_token={refresh_token}&grant_type=refresh_token')
 FITBIT_PERMISSION_SCREEN = 'https://fitbit.com/oauth2/authorize?response_type=code&client_id={client_id}&scope={scope}'
 FITBIT_EDIT_FOOD_LOG_URL = 'https://api.fitbit.com/1/user/-/foods/log.json'
 FITBIT_FOOD_UNIT_URL = 'https://api.fitbit.com/1/foods/units.json'
@@ -20,22 +23,51 @@ FITBIT_DELETE_FOOD_URL = 'https://api.fitbit.com/1/user/-/foods/log/{log_id}.jso
 DEFAULT_UNIT = 'unit'
 
 
-def auth(code, client_id, secret):
+def _load_saved_auth(auth_file_path):
+    try:
+        with open(auth_file_path) as auth_file:
+            auth_response = json.loads(auth_file.read())
+    except (FileNotFoundError, TypeError, ValueError):
+        auth_response = None
+    return auth_response
+
+
+def _do_auth(url, headers, auth_file_path):
+    r = requests.post(url, headers=headers)
+    if r.status_code != 200:
+        print("Auth Failed: {}".format(r.text))
+        sys.exit(1)
+    with open(auth_file_path, 'w') as outfile:
+        outfile.write(r.text)
+    return r.json()
+
+
+def refresh(auth_response, headers, auth_file_path):
+    auth_url = FITBIT_AUTH_REFRESH_URL.format(
+        refresh_token=auth_response['refresh_token']
+    )
+    logging.info("Refreshing auth token")
+    return _do_auth(auth_url, headers, auth_file_path)
+
+
+def auth(client_id, secret):
+    auth_file_path = "{}/auth.json".format(os.path.dirname(os.path.abspath(__file__)))
     token = base64.b64encode("{}:{}".format(client_id, secret).encode('utf-8')).decode('utf-8')
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': 'Basic {}'.format(token),
     }
-    auth_url = FITBIT_AUTH_URL.format(
-        code=code,
-        client_id=client_id
-    )
-    logging.info("logging into fitbit")
-    r = requests.post(auth_url, headers=headers)
-    if r.status_code != 200:
-        print("Auth Failed: {}".format(r.text))
-        sys.exit(1)
-    return r.json()
+    saved_auth = _load_saved_auth(auth_file_path)
+    if saved_auth:
+        return refresh(saved_auth, headers, auth_file_path)
+    else:
+        code = get_code(client_id)
+        auth_url = FITBIT_AUTH_URL.format(
+            code=code,
+            client_id=client_id
+        )
+        logging.info("logging into fitbit")
+        return _do_auth(auth_url, headers, auth_file_path)
 
 
 def get_code(client_id):
@@ -160,8 +192,7 @@ def main():
     logging.basicConfig(level='INFO')
     client_id = os.environ['WW_FB_ID']
     secret = os.environ['WW_FB_SECRET']
-    code = get_code(client_id)
-    auth_response = auth(code, client_id, secret)
+    auth_response = auth(client_id, secret)
     auth_header = {'Authorization': 'Bearer {}'.format(auth_response['access_token'])}
     pprint.pprint(get_food_logs(auth_header))
 

@@ -14,8 +14,7 @@ def main():
         os.environ['WW_USER'],
         os.environ['WW_PASSWD']
     )
-    code = get_code(client_id)
-    auth_response = auth(code, client_id, secret)
+    auth_response = auth(client_id, secret)
     auth_header = {'Authorization': 'Bearer {}'.format(auth_response['access_token'])}
     units = get_units(auth_header)
     clear_food_logs(auth_header, get_food_logs(auth_header))
