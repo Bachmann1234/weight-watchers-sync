@@ -182,7 +182,7 @@ def nutrition_times_portion(nutritional_info, portions):
     returns:
         dict with values multiplied by portions
     """
-    return {key: (float(value) * float(portions)) for key, value in nutritional_info.items()}
+    return {key: (float(value) * float(portions)) for key, value in nutritional_info.items() if value}
 
 
 def get_nutrition_info_for_day(username, password, date=None):

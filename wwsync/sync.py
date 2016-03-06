@@ -1,12 +1,24 @@
 import datetime
 import logging
-import pprint
 
 import sys
+import traceback
 
 import os
 from wwsync.fitbit import auth, get_units, clear_food_logs, make_food_log, get_food_logs
 from wwsync.weight_watchers import get_nutrition_info_for_day
+
+
+def setup_logging():
+    logging.basicConfig(level='INFO', format='%(asctime)s %(message)s')
+
+    def log_exceptions(exctype, value, tb):
+        """
+        Make sure any uncaught exceptions are logged
+        """
+        logging.error("Uncaught Exception: {} - {}\n{}".format(exctype.__name__, value, ''.join(traceback.format_tb(tb))))
+        sys.__excepthook__(exctype, value, tb)
+    sys.excepthook = log_exceptions
 
 
 def main():
@@ -14,7 +26,7 @@ def main():
         date = datetime.datetime.strptime(sys.argv[1], '%Y-%m-%d')
     else:
         date = datetime.datetime.now()
-    logging.basicConfig(level='INFO')
+    setup_logging()
     client_id = os.environ['WW_FB_ID']
     secret = os.environ['WW_FB_SECRET']
     nutritional_info_for_day = get_nutrition_info_for_day(
@@ -34,8 +46,6 @@ def main():
             units,
             date=date
         )
-    # print final result
-    pprint.pprint(get_food_logs(auth_header))
 
 
 if __name__ == '__main__':
