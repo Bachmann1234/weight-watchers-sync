@@ -27,6 +27,7 @@ def main():
     else:
         date = datetime.datetime.now()
     setup_logging()
+    logging.info("Updating foods for {}".format("{:%Y-%m-%d}".format(date)))
     client_id = os.environ['WW_FB_ID']
     secret = os.environ['WW_FB_SECRET']
     nutritional_info_for_day = get_nutrition_info_for_day(
