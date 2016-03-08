@@ -47,6 +47,7 @@ def main():
             units,
             date=date
         )
+    logging.info("Sync Complete")
 
 
 if __name__ == '__main__':
