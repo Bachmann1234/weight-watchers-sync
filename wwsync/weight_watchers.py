@@ -162,15 +162,15 @@ def get_nutrition_for_food(nutritional_info, food_log):
         nutritional_info (dict): WW food info of the food the food log is tracking
         food_log (dict): food entry logging the food nutritional info was passed in
     """
-    return _get_nutrition_for_food(nutritional_info, food_log['portionName'], food_log['portionSize'])
+    return _get_nutrition_for_food(nutritional_info, food_log['portionId'], food_log['portionSize'])
 
 
-def _get_nutrition_for_food(nutritional_info, portion_name, amount_consumed):
+def _get_nutrition_for_food(nutritional_info, portion_id, amount_consumed):
     portions = nutritional_info['portions']
     for portion in portions:
-        if portion['name'] == portion_name:
+        if portion['_id'] == portion_id:
             return nutrition_times_portion(portion['nutrition'], amount_consumed/portion['size'])
-    raise ValueError("Failed to find portion {}".format(portion_name))
+    raise ValueError("Failed to find portion with id {}".format(portion_id))
 
 
 def nutrition_times_portion(nutritional_info, portions):
