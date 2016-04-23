@@ -129,7 +129,7 @@ def get_nutrition_for_recipe(nutritional_info, food_log):
     ingredient_nutritional_infos = [
         _get_nutrition_for_food(
             ingredient['itemDetail'],
-            ingredient['portionName'],
+            ingredient['portionId'],
             ingredient['quantity']
         ) for ingredient in nutritional_info['ingredients']
     ]
