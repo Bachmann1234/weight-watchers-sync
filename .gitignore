@@ -35,3 +35,4 @@ report.html
 tests/fixtures/vcr_cassettes/*.yaml
 .cache
 auth.json
+*.sqlite3
