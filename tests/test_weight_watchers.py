@@ -19,52 +19,46 @@ def test_get_food_for_week(session):
 def test_get_calories_ww_defined_food(session):
     with vcr.use_cassette("{}/{}.yaml".format(CASSETTES_HOME, 'egg_log.yaml')):
         # This object is actually quite more complicated. But I don't care
-        food_log = {
-            '_id': '561dcbbae33175473413d475',
-            'versionId': '563c6669305d6e1834ab9485',
-            'portionName': 'large',
-            'sourceType': WW_FOOD,
-            'portionSize': 2
-        }
-        assert get_nutrition(get_food_detail(session, food_log), food_log) == {
-            'alcohol': 0.0,
+        food_log = {'portionId': '563c6669305d6e1834ab948d', 'sourceId': 58783, '_displayName': 'Egg(s)',
+         'sourcePortionName': 'serving(s)', 'points': 4, 'isCore': True, 'name': 'Egg(s)',
+         'entryId': 'ee1e26a0-4e37-11e6-8aa7-21442c64eff3', 'smartPointsPrecise': 2.0201, 'timeOfDay': 'morning',
+         'sourcePortionId': 9, 'versionId': '563c6669305d6e1834ab9485', 'smartPoints': 4, 'portionTypeId': 800,
+         'isActive': True, 'portionName': 'item(s)', 'portionSize': 2, 'isPowerFood': True, 'trackedDate': '2016-07-20',
+         'sourceType': WW_FOOD, '_servingDesc': '2 item(s)', '_id': '561dcbbae33175473413d475',
+         'pointsPrecise': 1.8347}
+        food_detail = get_food_detail(session, food_log)
+        result = get_nutrition(food_detail, food_log)
+        assert result == {
             'calories': 144.0,
-            'carbs': 0.72,
-            'cholesterol': 0.0,
-            'fat': 9.5,
-            'fiber': 0.0,
-            'protein': 12.56,
-            'saturatedFat': 3.12,
             'sodium': 142.0,
+            'saturatedFat': 3.12,
+            'carbs': 0.72,
             'sugar': 0.36,
-            'sugarAlcohol': 0.0,
-            'transFat': 0.0
+            'fat': 9.5,
+            'protein': 12.56
         }
 
 
 def test_get_calories_ww_recipe(session):
-    with vcr.use_cassette("{}/{}.yaml".format(CASSETTES_HOME, 'squash_recipe.yaml')):
+    with vcr.use_cassette("{}/{}.yaml".format(CASSETTES_HOME, 'steak_recipe.yaml')):
         # This object is actually quite more complicated. But I don't care
-        food_log = {
-            '_id': '5673fac8e5ff06633497a53e',
-            'versionId': '56754d41d147db5e34f33bfe',
-            'portionName': 'large',
-            'sourceType': WW_RECIPE,
-            'portionSize': 1
-        }
-        assert get_nutrition(get_food_detail(session, food_log), food_log) == {
-             'alcohol': 0.0,
-             'calories': 137.40625,
-             'carbs': 26.919925,
-             'cholesterol': 0.0,
-             'fat': 3.4685624999999995,
-             'fiber': 4.625666666666667,
-             'protein': 3.5154791666666663,
-             'saturatedFat': 0.892375,
-             'sodium': 217.77625,
-             'sugar': 5.016041666666666,
-             'sugarAlcohol': 0.0,
-             'transFat': 0.0
+        food_log = {'smartPoints': 4, '_servingDesc': '1 serving(s)',
+         '_displayName': 'Coffee-Chili Rubbed Flank Steak with Peppers and Onions', 'trackedDate': '2016-07-20',
+         'pointsPrecise': 4.8926, 'portionSize': 1, 'isActive': True, 'entryId': '6fc42740-4e38-11e6-8237-3d072975d999',
+         'points': 5, 'sourceId': 523991, 'smartPointsPrecise': 4, 'portionName': 'serving(s)',
+         'name': 'Coffee-Chili Rubbed Flank Steak with Peppers and Onions', 'portionTypeId': None,
+         'versionId': '57516df7f9984a6a3682ac0d', '_id': '57516df7f9984a6a3682ac0c', 'timeOfDay': 'morning',
+         'sourcePortionName': 'serving(s)', 'sourcePortionId': None, 'sourceType': WW_RECIPE, 'portionId': None}
+        result = get_nutrition(get_food_detail(session, food_log), food_log)
+        assert result == {
+            'sodium': 1089.58948,
+            'protein': 26.27602775,
+            'fiber': 2.48177325,
+            'fat': 7.102034249999999,
+            'sugar': 3.51908025,
+            'saturatedFat': 2.4551232499999998,
+            'carbs': 7.944517,
+            'calories': 201.15632675
         }
 
 
