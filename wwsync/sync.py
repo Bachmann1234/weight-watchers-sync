@@ -8,7 +8,7 @@ import traceback
 import os
 
 from wwsync.encrypt import decrypt
-from wwsync.fitbit import auth, get_units, clear_food_logs, make_food_log, get_food_logs, refresh
+from wwsync.fitbit import get_units, clear_food_logs, make_food_log, get_food_logs, refresh
 from wwsync.models import get_db_session, User
 from wwsync.weight_watchers import get_nutrition_info_for_day
 
