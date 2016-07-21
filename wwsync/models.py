@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import Column, String, Integer, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -10,7 +12,7 @@ _Session = None
 def get_db_session():
     global _Session
     if not _Session:
-        engine = create_engine('sqlite:///wwsync.sqlite3')
+        engine = create_engine('sqlite:///{}'.format(os.environ['WW_SYNC_DB']))
         _Session = sessionmaker(bind=engine)
         Base.metadata.create_all(engine)
     return _Session()
