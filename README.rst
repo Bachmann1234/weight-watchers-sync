@@ -14,8 +14,12 @@ This app depends on a few things:
 The sync app expects 4 environment variables defined
     WW_FB_ID - Your fitbit app client id
     WW_FB_SECRET - Your fitbit app client secret
-    WW_USER - Your Weight Watchers Username
-    WW_PASSWD - Your Weight Watchers Password
+    WW_SYNC_DB - The path the the sqllite database.
+    WW_SYNC_ENCRYPTION_KEY - Key to encrypt and decrypt ww passwords
+
+The encryption of the ww password is mildly silly. Perhaps I should be encypting everything? Perhaps its not worth bothering. Just... think a bit deeper if you take this and use it for people. WW passwords and the key for an app that should only need to view/edit food logs in fitbit is pretty low risk. But... still... put some thought into this if you choose to use this or have other use it.
+
+running add_user.py will walk you though and adding a user to the database
 
 With those defined you can run sync. It will first scrape weight watchers to
 grab all your food for the current day. Then all fitbit food logs for the current
