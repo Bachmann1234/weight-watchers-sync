@@ -19,7 +19,7 @@ def main():
 
     print("Now I need your weightwatcher username and password. "
           "this is because Weight Watchers does not provide an api with oauth")
-    ww_username = input("Weight watchers username")
+    ww_username = input("Weight watchers username: ")
 
     # This is *probably* silly since my initial implementation will use a database file. So if you get the file
     # You will probably figure out how to find the key (hint, its an environment variable).
@@ -28,7 +28,7 @@ def main():
 
     # However, I dont plan on hosting this for people I dont know since I am using undocumented ww apis
     # And if WW does make an api it will hopefully not have oauth
-    ww_password = encrypt(getpass("Weight Watcher password").encode('utf-8'))
+    ww_password = encrypt(getpass("Weight Watcher password: ").encode('utf-8'))
 
     user = User(fitbit_tokens=json.dumps(fitbit_info), ww_username=ww_username, ww_password=ww_password)
     db_session.add(user)
