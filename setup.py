@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
    name='wwsync',
-   version='1.0',
+   version='2.0',
    author='Matt Bachmann',
    url='https://github.com/Bachmann1234/weight-watchers-sync',
    description='Syncs Weight Watcher food log to Fitbit',
